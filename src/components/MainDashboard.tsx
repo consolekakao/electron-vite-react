@@ -4,12 +4,10 @@ import {
   AppBar,
   Toolbar,
   Typography,
-  Button,
   Container,
   Grid,
   Card,
   CardContent,
-  CardActions,
   Avatar,
   Menu,
   MenuItem,
@@ -23,6 +21,7 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  ListItemButton,
 } from '@mui/material';
 import {
   AccountCircle,
@@ -36,8 +35,9 @@ import {
   WorkOutline,
   Menu as MenuIcon,
 } from '@mui/icons-material';
+import Monitoring from './Monitoring';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -49,14 +49,24 @@ interface MainDashboardProps {
   onLogout: () => void;
 }
 
+type CurrentView = 'dashboard' | 'projects' | 'users' | 'monitoring' | 'settings';
+
 const MainDashboard: React.FC<MainDashboardProps> = ({ user, onLogout }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<CurrentView>('dashboard');
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleMenuClick = (view: CurrentView) => {
+    setCurrentView(view);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
   };
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -111,11 +121,11 @@ const MainDashboard: React.FC<MainDashboardProps> = ({ user, onLogout }) => {
   ];
 
   const menuItems = [
-    { text: '대시보드', icon: <Dashboard /> },
-    { text: '프로젝트 관리', icon: <WorkOutline /> },
-    { text: '사용자 관리', icon: <People /> },
-    { text: '모니터링', icon: <Assessment /> },
-    { text: '설정', icon: <Settings /> },
+    { text: '대시보드', icon: <Dashboard />, view: 'dashboard' as CurrentView },
+    { text: '프로젝트 관리', icon: <WorkOutline />, view: 'projects' as CurrentView },
+    { text: '사용자 관리', icon: <People />, view: 'users' as CurrentView },
+    { text: '모니터링', icon: <Assessment />, view: 'monitoring' as CurrentView },
+    { text: '설정', icon: <Settings />, view: 'settings' as CurrentView },
   ];
 
   const drawerWidth = 280;
@@ -130,9 +140,10 @@ const MainDashboard: React.FC<MainDashboardProps> = ({ user, onLogout }) => {
       <Divider />
       <List sx={{ px: 1 }}>
         {menuItems.map((item, index) => (
-          <ListItem 
-            button 
+          <ListItemButton
             key={index}
+            onClick={() => handleMenuClick(item.view)}
+            selected={currentView === item.view}
             sx={{
               borderRadius: 2,
               mb: 0.5,
@@ -142,20 +153,219 @@ const MainDashboard: React.FC<MainDashboardProps> = ({ user, onLogout }) => {
                   color: 'primary.contrastText',
                 },
               },
+              '&.Mui-selected': {
+                backgroundColor: 'primary.main',
+                '& .MuiListItemIcon-root, & .MuiListItemText-primary': {
+                  color: 'primary.contrastText',
+                },
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+              },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 40, color: 'text.secondary' }}>
+            <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
               {item.icon}
             </ListItemIcon>
             <ListItemText 
-              primary={item.text} 
-              primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
+              primary={item.text}
+              slotProps={{
+                primary: {
+                  sx: {
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                  },
+                },
+              }}
             />
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
     </Box>
   );
+
+  const renderContent = () => {
+    switch (currentView) {
+      case 'monitoring':
+        return <Monitoring />;
+      case 'projects':
+        return (
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+              프로젝트 관리
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              프로젝트 관리 기능이 곧 추가됩니다.
+            </Typography>
+          </Paper>
+        );
+      case 'users':
+        return (
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+              사용자 관리
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              사용자 관리 기능이 곧 추가됩니다.
+            </Typography>
+          </Paper>
+        );
+      case 'settings':
+        return (
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+              설정
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              설정 기능이 곧 추가됩니다.
+            </Typography>
+          </Paper>
+        );
+      case 'dashboard':
+      default:
+        return (
+          <>
+            {/* 대시보드 카드들 */}
+            <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4 }}>
+              {dashboardCards.map((card, index) => (
+                <Grid item xs={12} sm={6} lg={3} key={index}>
+                  <Card 
+                    sx={{ 
+                      height: '100%',
+                      transition: 'all 0.2s ease-in-out',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                        <Box
+                          sx={{
+                            p: { xs: 1, md: 1.5 },
+                            borderRadius: 3,
+                            backgroundColor: card.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {card.icon}
+                        </Box>
+                        <Box sx={{ ml: 'auto' }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ 
+                              color: '#27ae60', 
+                              fontWeight: 600,
+                              backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                              px: 1,
+                              py: 0.5,
+                              borderRadius: 1,
+                            }}
+                          >
+                            {card.change}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Typography 
+                        variant="h4" 
+                        component="div" 
+                        gutterBottom
+                        sx={{ 
+                          fontSize: { xs: '1.5rem', md: '2rem' },
+                          fontWeight: 700,
+                          color: 'text.primary',
+                        }}
+                      >
+                        {card.value}
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: 'text.secondary',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {card.title}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+
+            {/* 최근 활동 */}
+            <Paper 
+              sx={{ 
+                p: { xs: 2, md: 3 },
+                borderRadius: 3,
+              }}
+            >
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{ 
+                  fontWeight: 600,
+                  mb: 3,
+                  color: 'text.primary',
+                }}
+              >
+                최근 활동
+              </Typography>
+              <List sx={{ p: 0 }}>
+                {recentActivities.map((activity, index) => (
+                  <ListItem 
+                    key={activity.id} 
+                    divider={index !== recentActivities.length - 1}
+                    sx={{ 
+                      px: 0,
+                      py: 2,
+                      '&:hover': {
+                        backgroundColor: 'rgba(44, 62, 80, 0.02)',
+                        borderRadius: 2,
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 48 }}>
+                      <Avatar 
+                        sx={{ 
+                          width: 36, 
+                          height: 36, 
+                          bgcolor: 'primary.main',
+                          '& .MuiSvgIcon-root': {
+                            fontSize: 18,
+                          },
+                        }}
+                      >
+                        <Notifications />
+                      </Avatar>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={activity.activity}
+                      secondary={activity.time}
+                      slotProps={{
+                        primary: {
+                          sx: {
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                          },
+                        },
+                        secondary: {
+                          sx: {
+                            fontSize: '0.75rem',
+                            color: 'text.secondary',
+                          },
+                        },
+                      }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          </>
+        );
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
@@ -222,11 +432,13 @@ const MainDashboard: React.FC<MainDashboardProps> = ({ user, onLogout }) => {
               }}
               open={Boolean(anchorEl)}
               onClose={handleClose}
-              PaperProps={{
-                sx: {
-                  borderRadius: 2,
-                  minWidth: 180,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: 2,
+                    minWidth: 180,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                  },
                 },
               }}
             >
@@ -304,137 +516,7 @@ const MainDashboard: React.FC<MainDashboardProps> = ({ user, onLogout }) => {
       >
         <Toolbar />
         <Container maxWidth="xl" sx={{ py: 4, px: { xs: 2, sm: 3 } }}>
-          {/* 대시보드 카드들 */}
-          <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4 }}>
-            {dashboardCards.map((card, index) => (
-              <Grid item xs={12} sm={6} lg={3} key={index}>
-                <Card 
-                  sx={{ 
-                    height: '100%',
-                    transition: 'all 0.2s ease-in-out',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                      <Box
-                        sx={{
-                          p: { xs: 1, md: 1.5 },
-                          borderRadius: 3,
-                          backgroundColor: card.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        {card.icon}
-                      </Box>
-                      <Box sx={{ ml: 'auto' }}>
-                        <Typography
-                          variant="caption"
-                          sx={{ 
-                            color: '#27ae60', 
-                            fontWeight: 600,
-                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                            px: 1,
-                            py: 0.5,
-                            borderRadius: 1,
-                          }}
-                        >
-                          {card.change}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Typography 
-                      variant="h4" 
-                      component="div" 
-                      gutterBottom
-                      sx={{ 
-                        fontSize: { xs: '1.5rem', md: '2rem' },
-                        fontWeight: 700,
-                        color: 'text.primary',
-                      }}
-                    >
-                      {card.value}
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        color: 'text.secondary',
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {card.title}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-
-          {/* 최근 활동 */}
-          <Paper 
-            sx={{ 
-              p: { xs: 2, md: 3 },
-              borderRadius: 3,
-            }}
-          >
-            <Typography 
-              variant="h6" 
-              gutterBottom
-              sx={{ 
-                fontWeight: 600,
-                mb: 3,
-                color: 'text.primary',
-              }}
-            >
-              최근 활동
-            </Typography>
-            <List sx={{ p: 0 }}>
-              {recentActivities.map((activity, index) => (
-                <ListItem 
-                  key={activity.id} 
-                  divider={index !== recentActivities.length - 1}
-                  sx={{ 
-                    px: 0,
-                    py: 2,
-                    '&:hover': {
-                      backgroundColor: 'rgba(44, 62, 80, 0.02)',
-                      borderRadius: 2,
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{ minWidth: 48 }}>
-                    <Avatar 
-                      sx={{ 
-                        width: 36, 
-                        height: 36, 
-                        bgcolor: 'primary.main',
-                        '& .MuiSvgIcon-root': {
-                          fontSize: 18,
-                        },
-                      }}
-                    >
-                      <Notifications />
-                    </Avatar>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={activity.activity}
-                    secondary={activity.time}
-                    primaryTypographyProps={{
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                    }}
-                    secondaryTypographyProps={{
-                      fontSize: '0.75rem',
-                      color: 'text.secondary',
-                    }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
+          {renderContent()}
         </Container>
       </Box>
     </Box>
